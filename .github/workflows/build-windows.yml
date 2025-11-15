@@ -1,0 +1,91 @@
+name: Build Windows FFmpeg
+
+on:
+  workflow_dispatch:
+    inputs:
+      capture_device:
+        description: "Screen capture device to use"
+        required: true
+        default: "gdigrab"
+        type: choice
+        options:
+          - ddagrab
+          - gdigrab
+env:
+  X264_REF: "b35605ace3ddf7c1a5d67a2eb553f034aef41d55"
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - msystem: MINGW64
+            arch: x86_64
+            artifact_name: ffmpeg-win64
+          - msystem: MINGW32
+            arch: i686
+            artifact_name: ffmpeg-win32
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.msystem }}
+          update: true
+          install: >-
+            base-devel
+            mingw-w64-${{ matrix.arch }}-gcc
+            mingw-w64-${{ matrix.arch }}-yasm
+            mingw-w64-${{ matrix.arch }}-nasm
+            mingw-w64-${{ matrix.arch }}-pkg-config
+            git
+
+      - name: Build x264
+        shell: msys2 {0}
+        run: |
+          git clone --branch stable https://code.videolan.org/videolan/x264.git
+          cd x264
+          git checkout ${{ env.X264_REF }}
+          ./configure --prefix=/mingw${{ matrix.arch == 'x86_64' && '64' || '32' }} --enable-static --disable-cli
+          make -j$(nproc)
+          make install
+
+      - name: Build FFmpeg
+        shell: msys2 {0}
+        run: |
+          git clone --depth 1 --branch release/7.1 https://git.ffmpeg.org/ffmpeg.git
+          cd ffmpeg
+          ./configure \
+            --prefix=$PWD/../output \
+            --disable-everything \
+            --enable-gpl \
+            --enable-libx264 \
+            --enable-indev=dshow \
+            --enable-indev=${{ github.event.inputs.capture_device }} \
+            --enable-indev=lavfi \
+            --enable-decoder=rawvideo \
+            --enable-demuxer=rawvideo \
+            --enable-encoder=libx264 \
+            --enable-protocol=pipe \
+            --enable-muxer=mpegts \
+            --enable-filter=scale \
+            --enable-filter=format \
+            --disable-doc \
+            --disable-debug
+          make -j$(nproc)
+          make install
+          strip ../output/bin/ffmpeg.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}-${{ github.event.inputs.capture_device }}
+          path: |
+            output/bin/ffmpeg.exe
+            THIRD_PARTY_NOTICES.txt
+          if-no-files-found: error

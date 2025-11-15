@@ -1,0 +1,22 @@
+Open Source Licenses and Third-Party Notices
+
+This binary distribution of ffmpeg-minimal includes third-party software licensed under open-source licenses. Please refer to the links below for the full license texts and source repositories.
+
+FFmpeg
+- Project: FFmpeg
+- Source: https://git.ffmpeg.org/ffmpeg.git
+- License: GNU General Public License version 2 (GPLv2)
+  For the full text of GPLv2 see: https://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+
+x264
+- Project: x264 (libx264)
+- Source / Explore: https://code.videolan.org/explore
+  The x264 repository is hosted under the VideoLAN organization; search for "x264" there.
+- License: x264 is distributed under free software licenses; please review the x264 repository for exact licensing details and text.
+
+Note on distribution and compliance
+This artifact bundles and redistributes FFmpeg (and other components) which are subject to GPLv2 and related licenses when enabling GPL parts such as libx264. By distributing these binaries, you accept the terms of their licenses.
+
+For license compliance and to obtain the full source corresponding to this build, please visit the linked repositories above. If you need a copy of the complete GPLv2 text bundled with the binary, you may obtain it from the GNU website above or by requesting the corresponding source code through the FFmpeg repository.
+
+If you are redistributing this binary, ensure you meet all obligations of the GPL (for example, making the corresponding source available under the GPLv2) and keep this file with the binary distribution.
