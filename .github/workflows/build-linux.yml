@@ -21,7 +21,8 @@ jobs:
             yasm \
             nasm \
             pkg-config \
-            git
+            git \
+            zip
 
       - name: Clone and build x264 for Linux
         run: |
@@ -63,11 +64,14 @@ jobs:
           make install
           strip ../ffmpeg-linux-amd64/bin/ffmpeg
 
+      - name: Create Linux artifact zip
+        run: |
+          zip -j ffmpeg-linux-amd64/bin/ffmpeg.zip ffmpeg-linux-amd64/bin/ffmpeg THIRD_PARTY_NOTICES.txt
+
       - name: Upload Linux AMD64 artifact
         uses: actions/upload-artifact@v5
         with:
           name: ffmpeg-linux-amd64
           path: |
-            ffmpeg-linux-amd64/bin/ffmpeg
-            THIRD_PARTY_NOTICES.txt
+            ffmpeg-linux-amd64/bin/ffmpeg.zip
           if-no-files-found: error

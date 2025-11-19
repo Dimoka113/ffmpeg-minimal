@@ -29,7 +29,8 @@ jobs:
             gcc-mingw-w64-x86-64 \
             gcc-mingw-w64-i686 \
             g++-mingw-w64-x86-64 \
-            g++-mingw-w64-i686
+            g++-mingw-w64-i686 \
+            zip
 
       - name: Clone and build x264 for Linux
         run: |
@@ -71,6 +72,11 @@ jobs:
           make -j$(nproc)
           make install
           strip ../ffmpeg-linux-amd64/bin/ffmpeg
+
+      - name: Create Linux artifact zip
+        run: |
+          # Put both the ffmpeg binary and THIRD_PARTY_NOTICES.txt in the root of the zip
+          zip -j ffmpeg-linux-amd64/bin/ffmpeg.zip ffmpeg-linux-amd64/bin/ffmpeg THIRD_PARTY_NOTICES.txt
 
       - name: Install libx264 for cross-compilation
         run: |
@@ -133,6 +139,11 @@ jobs:
           make install
           x86_64-w64-mingw32-strip ../ffmpeg-win64/bin/ffmpeg.exe
 
+      - name: Create Windows 64-bit artifact zip
+        run: |
+          # Bundle the ffmpeg.exe and THIRD_PARTY_NOTICES.txt into a single zip
+          zip -j ffmpeg-win64/bin/ffmpeg.zip ffmpeg-win64/bin/ffmpeg.exe THIRD_PARTY_NOTICES.txt
+
       - name: Build Windows 32-bit
         run: |
           cd ffmpeg-source
@@ -164,13 +175,17 @@ jobs:
           make install
           i686-w64-mingw32-strip ../ffmpeg-win32/bin/ffmpeg.exe
 
+      - name: Create Windows 32-bit artifact zip
+        run: |
+          # Bundle the ffmpeg.exe and THIRD_PARTY_NOTICES.txt into a single zip
+          zip -j ffmpeg-win32/bin/ffmpeg.zip ffmpeg-win32/bin/ffmpeg.exe THIRD_PARTY_NOTICES.txt
+
       - name: Upload Linux AMD64 artifact
         uses: actions/upload-artifact@v5
         with:
           name: ffmpeg-linux-amd64
           path: |
-            ffmpeg-linux-amd64/bin/ffmpeg
-            THIRD_PARTY_NOTICES.txt
+            ffmpeg-linux-amd64/bin/ffmpeg.zip
           if-no-files-found: error
 
       - name: Upload Windows 64-bit artifact
@@ -178,8 +193,7 @@ jobs:
         with:
           name: ffmpeg-win64
           path: |
-            ffmpeg-win64/bin/ffmpeg.exe
-            THIRD_PARTY_NOTICES.txt
+            ffmpeg-win64/bin/ffmpeg.zip
           if-no-files-found: error
 
       - name: Upload Windows 32-bit artifact
@@ -187,6 +201,5 @@ jobs:
         with:
           name: ffmpeg-win32
           path: |
-            ffmpeg-win32/bin/ffmpeg.exe
-            THIRD_PARTY_NOTICES.txt
+            ffmpeg-win32/bin/ffmpeg.zip
           if-no-files-found: error

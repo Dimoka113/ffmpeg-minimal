@@ -61,13 +61,17 @@ jobs:
           make install
           strip ../ffmpeg-macos-intel/bin/ffmpeg
 
+      - name: Create macOS Intel artifact zip
+        run: |
+          # Put both the ffmpeg binary and THIRD_PARTY_NOTICES.txt in the root of the zip
+          zip -j ffmpeg-macos-intel/bin/ffmpeg.zip ffmpeg-macos-intel/bin/ffmpeg THIRD_PARTY_NOTICES.txt
+
       - name: Upload macOS Intel artifact
         uses: actions/upload-artifact@v5
         with:
           name: ffmpeg-macos-intel
           path: |
-            ffmpeg-macos-intel/bin/ffmpeg
-            THIRD_PARTY_NOTICES.txt
+            ffmpeg-macos-intel/bin/ffmpeg.zip
           if-no-files-found: error
 
   build-macos-arm64:
@@ -123,11 +127,14 @@ jobs:
           make install
           strip ../ffmpeg-macos-arm64/bin/ffmpeg
 
+      - name: Create macOS Apple Silicon artifact zip
+        run: |
+          zip -j ffmpeg-macos-arm64/bin/ffmpeg.zip ffmpeg-macos-arm64/bin/ffmpeg THIRD_PARTY_NOTICES.txt
+
       - name: Upload macOS Apple Silicon artifact
         uses: actions/upload-artifact@v5
         with:
           name: ffmpeg-macos-arm64
           path: |
-            ffmpeg-macos-arm64/bin/ffmpeg
-            THIRD_PARTY_NOTICES.txt
+            ffmpeg-macos-arm64/bin/ffmpeg.zip
           if-no-files-found: error
