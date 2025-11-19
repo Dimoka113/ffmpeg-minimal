@@ -2,6 +2,8 @@ Open Source Licenses and Third-Party Notices
 
 This binary distribution of ffmpeg-minimal includes third-party software licensed under open-source licenses. Please refer to the links below for the full license texts and source repositories.
 
+This distribution was built using workflows from https://github.com/bitbound/ffmpeg-minimal.
+
 FFmpeg
 - Project: FFmpeg
 - Source: https://git.ffmpeg.org/ffmpeg.git
