@@ -2,6 +2,7 @@ name: Build Linux
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   build-linux:
@@ -73,7 +74,7 @@ jobs:
       - name: Prepare Linux artifact
         run: |
           mkdir artifact
-          cp ffmpeg-linux-amd64/bin/ffmpeg artifact/
+          cp ffmpeg-linux-amd64/bin/ffmpeg artifact/ffmpeg-linux-amd64
           cp THIRD_PARTY_NOTICES.txt artifact/
 
       - name: Upload Linux AMD64 artifact

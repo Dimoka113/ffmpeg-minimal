@@ -2,6 +2,7 @@ name: Build macOS
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 jobs:
   build-macos-intel:
@@ -65,7 +66,7 @@ jobs:
       - name: Prepare macOS Intel artifact
         run: |
           mkdir artifact
-          cp ffmpeg-macos-intel/bin/ffmpeg artifact/
+          cp ffmpeg-macos-intel/bin/ffmpeg artifact/ffmpeg-macos-intel
           cp THIRD_PARTY_NOTICES.txt artifact/
 
       - name: Upload macOS Intel artifact
@@ -136,7 +137,7 @@ jobs:
       - name: Prepare macOS Apple Silicon artifact
         run: |
           mkdir artifact
-          cp ffmpeg-macos-arm64/bin/ffmpeg artifact/
+          cp ffmpeg-macos-arm64/bin/ffmpeg artifact/ffmpeg-macos-arm64
           cp THIRD_PARTY_NOTICES.txt artifact/
 
       - name: Upload macOS Apple Silicon artifact

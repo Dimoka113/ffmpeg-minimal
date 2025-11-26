@@ -1,0 +1,45 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g., 7.1-1)"
+        required: true
+        type: string
+
+jobs:
+  build-win-gdigrab:
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      capture_device: 'gdigrab'
+
+  build-linux:
+    uses: ./.github/workflows/build-linux.yml
+
+  build-macos:
+    uses: ./.github/workflows/build-macos.yml
+
+  publish-release:
+    needs: [build-win-gdigrab, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List Artifacts
+        run: ls -R artifacts
+
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ inputs.version }}" \
+            --title "FFmpeg Minimal ${{ inputs.version }}" \
+            --notes "Build of FFmpeg 7.1 with libvpx support." \
+            artifacts/*

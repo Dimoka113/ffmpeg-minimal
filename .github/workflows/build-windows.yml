@@ -11,6 +11,13 @@ on:
         options:
           - ddagrab
           - gdigrab
+  workflow_call:
+    inputs:
+      capture_device:
+        description: "Screen capture device to use"
+        required: true
+        default: "gdigrab"
+        type: string
 
 jobs:
   build-windows:
@@ -71,7 +78,7 @@ jobs:
             --disable-everything \
             --enable-libvpx \
             --enable-indev=dshow \
-            --enable-indev=${{ github.event.inputs.capture_device }} \
+            --enable-indev=${{ inputs.capture_device }} \
             --enable-indev=lavfi \
             --enable-decoder=rawvideo \
             --enable-decoder=vp9 \
@@ -93,13 +100,13 @@ jobs:
         shell: pwsh
         run: |
           New-Item -Path artifact -ItemType Directory -Force | Out-Null
-          Copy-Item -Path output/bin/ffmpeg.exe -Destination artifact
+          Copy-Item -Path output/bin/ffmpeg.exe -Destination artifact/${{ matrix.artifact_name }}-${{ inputs.capture_device }}.exe
           Copy-Item -Path THIRD_PARTY_NOTICES.txt -Destination artifact
 
       - name: Upload artifact
         uses: actions/upload-artifact@v5
         with:
-          name: ${{ matrix.artifact_name }}-${{ github.event.inputs.capture_device }}
+          name: ${{ matrix.artifact_name }}-${{ inputs.capture_device }}
           path: artifact/*
           if-no-files-found: error
           retention-days: 1
