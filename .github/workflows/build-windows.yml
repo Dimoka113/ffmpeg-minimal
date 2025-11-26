@@ -1,4 +1,4 @@
-name: Build Windows FFmpeg
+name: Build Windows
 
 on:
   workflow_dispatch:

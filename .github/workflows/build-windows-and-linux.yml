@@ -1,4 +1,4 @@
-name: Build Linux and Windows FFmpeg
+name: Build Linux and Windows 
 
 on:
   workflow_dispatch:
