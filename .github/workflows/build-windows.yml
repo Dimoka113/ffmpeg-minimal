@@ -67,6 +67,7 @@ jobs:
           cd ffmpeg
           ./configure \
             --prefix=$PWD/../output \
+            --pkg-config-flags="--static" \
             --disable-everything \
             --enable-libvpx \
             --enable-indev=dshow \
@@ -82,26 +83,23 @@ jobs:
             --enable-filter=scale \
             --enable-filter=format \
             --disable-doc \
-            --disable-debug
+            --disable-debug \
+            --extra-ldflags="-static"
           make -j$(nproc)
           make install
           strip ../output/bin/ffmpeg.exe
 
-      - name: Create Windows artifact zip
+      - name: Prepare Windows artifact
         shell: pwsh
         run: |
-          # Copy binary and license into a temp folder so they are at the root of the zip
-          New-Item -Path tmpzip -ItemType Directory -Force | Out-Null
-          Copy-Item -Path output/bin/ffmpeg.exe -Destination tmpzip
-          Copy-Item -Path THIRD_PARTY_NOTICES.txt -Destination tmpzip
-          Compress-Archive -Path tmpzip\* -DestinationPath output/bin/ffmpeg.zip -Force
-          Remove-Item -Recurse -Force tmpzip
+          New-Item -Path artifact -ItemType Directory -Force | Out-Null
+          Copy-Item -Path output/bin/ffmpeg.exe -Destination artifact
+          Copy-Item -Path THIRD_PARTY_NOTICES.txt -Destination artifact
 
       - name: Upload artifact
         uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.artifact_name }}-${{ github.event.inputs.capture_device }}
-          path: |
-            output/bin/ffmpeg.zip
+          path: artifact/*
           if-no-files-found: error
           retention-days: 1
