@@ -2,8 +2,6 @@ name: Build Linux and Windows FFmpeg
 
 on:
   workflow_dispatch:
-env:
-  X264_REF: "b35605ace3ddf7c1a5d67a2eb553f034aef41d55"
 
 jobs:
   build-linux-windows:
@@ -32,15 +30,19 @@ jobs:
             g++-mingw-w64-i686 \
             zip
 
-      - name: Clone and build x264 for Linux
+      - name: Clone and build libvpx for Linux
         run: |
-          git clone --branch stable https://code.videolan.org/videolan/x264.git x264-linux-source
-          cd x264-linux-source
-          git checkout ${{ env.X264_REF }}
+          git clone --depth 1 --branch v1.14.1 https://chromium.googlesource.com/webm/libvpx libvpx-linux-source
+          cd libvpx-linux-source
           ./configure \
-            --prefix=$PWD/../x264-linux \
-            --enable-static \
-            --disable-cli
+            --prefix=$PWD/../libvpx-linux \
+            --disable-examples \
+            --disable-tools \
+            --disable-docs \
+            --disable-unit-tests \
+            --enable-vp9 \
+            --enable-vp9-highbitdepth \
+            --as=yasm
           make -j$(nproc)
           make install
 
@@ -51,24 +53,25 @@ jobs:
       - name: Build Linux AMD64
         run: |
           cd ffmpeg-source
-          PKG_CONFIG_PATH=$PWD/../x264-linux/lib/pkgconfig ./configure \
+          PKG_CONFIG_PATH=$PWD/../libvpx-linux/lib/pkgconfig ./configure \
             --prefix=$PWD/../ffmpeg-linux-amd64 \
             --disable-everything \
-            --enable-gpl \
-            --enable-libx264 \
+            --enable-libvpx \
             --enable-indev=x11grab \
             --enable-indev=lavfi \
             --enable-decoder=rawvideo \
+            --enable-decoder=vp9 \
             --enable-demuxer=rawvideo \
-            --enable-encoder=libx264 \
+            --enable-encoder=libvpx_vp9 \
             --enable-protocol=pipe \
-            --enable-muxer=mpegts \
+            --enable-muxer=webm \
+            --enable-muxer=matroska \
             --enable-filter=scale \
             --enable-filter=format \
             --disable-doc \
             --disable-debug \
-            --extra-cflags="-I$PWD/../x264-linux/include" \
-            --extra-ldflags="-L$PWD/../x264-linux/lib"
+            --extra-cflags="-I$PWD/../libvpx-linux/include" \
+            --extra-ldflags="-L$PWD/../libvpx-linux/lib"
           make -j$(nproc)
           make install
           strip ../ffmpeg-linux-amd64/bin/ffmpeg
@@ -78,33 +81,38 @@ jobs:
           # Put both the ffmpeg binary and THIRD_PARTY_NOTICES.txt in the root of the zip
           zip -j ffmpeg-linux-amd64/bin/ffmpeg.zip ffmpeg-linux-amd64/bin/ffmpeg THIRD_PARTY_NOTICES.txt
 
-      - name: Install libx264 for cross-compilation
+      - name: Install libvpx for cross-compilation
         run: |
-          # Build x264 for Windows 64-bit
-          git clone --branch stable https://code.videolan.org/videolan/x264.git x264-source
+          # Build libvpx for Windows 64-bit
+          git clone --depth 1 --branch v1.14.1 https://chromium.googlesource.com/webm/libvpx libvpx-source
 
           # Build for win64
-          cd x264-source
-          git checkout ${{ env.X264_REF }}
+          cd libvpx-source
           ./configure \
-            --host=x86_64-w64-mingw32 \
-            --cross-prefix=x86_64-w64-mingw32- \
-            --prefix=$PWD/../x264-win64 \
-            --enable-static \
-            --disable-cli
+            --target=x86_64-win64-gcc \
+            --prefix=$PWD/../libvpx-win64 \
+            --disable-examples \
+            --disable-tools \
+            --disable-docs \
+            --disable-unit-tests \
+            --enable-vp9 \
+            --enable-vp9-highbitdepth
           make -j$(nproc)
           make install
           cd ..
 
           # Clean for win32 build
-          cd x264-source
+          cd libvpx-source
           make distclean
           ./configure \
-            --host=i686-w64-mingw32 \
-            --cross-prefix=i686-w64-mingw32- \
-            --prefix=$PWD/../x264-win32 \
-            --enable-static \
-            --disable-cli
+            --target=x86-win32-gcc \
+            --prefix=$PWD/../libvpx-win32 \
+            --disable-examples \
+            --disable-tools \
+            --disable-docs \
+            --disable-unit-tests \
+            --enable-vp9 \
+            --enable-vp9-highbitdepth
           make -j$(nproc)
           make install
 
@@ -112,29 +120,30 @@ jobs:
         run: |
           cd ffmpeg-source
           make distclean || true
-          PKG_CONFIG_PATH=$PWD/../x264-win64/lib/pkgconfig ./configure \
+          PKG_CONFIG_PATH=$PWD/../libvpx-win64/lib/pkgconfig ./configure \
             --arch=x86_64 \
             --target-os=mingw32 \
             --cross-prefix=x86_64-w64-mingw32- \
             --prefix=$PWD/../ffmpeg-win64 \
             --disable-everything \
-            --enable-gpl \
-            --enable-libx264 \
+            --enable-libvpx \
             --enable-cross-compile \
             --enable-indev=dshow \
             --enable-indev=gdigrab \
             --enable-indev=lavfi \
             --enable-decoder=rawvideo \
+            --enable-decoder=vp9 \
             --enable-demuxer=rawvideo \
-            --enable-encoder=libx264 \
+            --enable-encoder=libvpx_vp9 \
             --enable-protocol=pipe \
-            --enable-muxer=mpegts \
+            --enable-muxer=webm \
+            --enable-muxer=matroska \
             --enable-filter=scale \
             --enable-filter=format \
             --disable-doc \
             --disable-debug \
-            --extra-cflags="-I$PWD/../x264-win64/include" \
-            --extra-ldflags="-L$PWD/../x264-win64/lib"
+            --extra-cflags="-I$PWD/../libvpx-win64/include" \
+            --extra-ldflags="-L$PWD/../libvpx-win64/lib"
           make -j$(nproc)
           make install
           x86_64-w64-mingw32-strip ../ffmpeg-win64/bin/ffmpeg.exe
@@ -148,29 +157,30 @@ jobs:
         run: |
           cd ffmpeg-source
           make distclean
-          PKG_CONFIG_PATH=$PWD/../x264-win32/lib/pkgconfig ./configure \
+          PKG_CONFIG_PATH=$PWD/../libvpx-win32/lib/pkgconfig ./configure \
             --arch=x86 \
             --target-os=mingw32 \
             --cross-prefix=i686-w64-mingw32- \
             --prefix=$PWD/../ffmpeg-win32 \
             --disable-everything \
-            --enable-gpl \
-            --enable-libx264 \
+            --enable-libvpx \
             --enable-cross-compile \
             --enable-indev=dshow \
             --enable-indev=gdigrab \
             --enable-indev=lavfi \
             --enable-decoder=rawvideo \
+            --enable-decoder=vp9 \
             --enable-demuxer=rawvideo \
-            --enable-encoder=libx264 \
+            --enable-encoder=libvpx_vp9 \
             --enable-protocol=pipe \
-            --enable-muxer=mpegts \
+            --enable-muxer=webm \
+            --enable-muxer=matroska \
             --enable-filter=scale \
             --enable-filter=format \
             --disable-doc \
             --disable-debug \
-            --extra-cflags="-I$PWD/../x264-win32/include" \
-            --extra-ldflags="-L$PWD/../x264-win32/lib"
+            --extra-cflags="-I$PWD/../libvpx-win32/include" \
+            --extra-ldflags="-L$PWD/../libvpx-win32/lib"
           make -j$(nproc)
           make install
           i686-w64-mingw32-strip ../ffmpeg-win32/bin/ffmpeg.exe

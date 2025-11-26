@@ -11,8 +11,6 @@ on:
         options:
           - ddagrab
           - gdigrab
-env:
-  X264_REF: "b35605ace3ddf7c1a5d67a2eb553f034aef41d55"
 
 jobs:
   build-windows:
@@ -45,13 +43,20 @@ jobs:
             mingw-w64-${{ matrix.arch }}-pkg-config
             git
 
-      - name: Build x264
+      - name: Build libvpx
         shell: msys2 {0}
         run: |
-          git clone --branch stable https://code.videolan.org/videolan/x264.git
-          cd x264
-          git checkout ${{ env.X264_REF }}
-          ./configure --prefix=/mingw${{ matrix.arch == 'x86_64' && '64' || '32' }} --enable-static --disable-cli
+          git clone --depth 1 --branch v1.14.1 https://chromium.googlesource.com/webm/libvpx
+          cd libvpx
+          ./configure \
+            --prefix=/mingw${{ matrix.arch == 'x86_64' && '64' || '32' }} \
+            --target=${{ matrix.arch == 'x86_64' && 'x86_64-win64-gcc' || 'x86-win32-gcc' }} \
+            --disable-examples \
+            --disable-tools \
+            --disable-docs \
+            --disable-unit-tests \
+            --enable-vp9 \
+            --enable-vp9-highbitdepth
           make -j$(nproc)
           make install
 
@@ -63,16 +68,17 @@ jobs:
           ./configure \
             --prefix=$PWD/../output \
             --disable-everything \
-            --enable-gpl \
-            --enable-libx264 \
+            --enable-libvpx \
             --enable-indev=dshow \
             --enable-indev=${{ github.event.inputs.capture_device }} \
             --enable-indev=lavfi \
             --enable-decoder=rawvideo \
+            --enable-decoder=vp9 \
             --enable-demuxer=rawvideo \
-            --enable-encoder=libx264 \
+            --enable-encoder=libvpx_vp9 \
             --enable-protocol=pipe \
-            --enable-muxer=mpegts \
+            --enable-muxer=webm \
+            --enable-muxer=matroska \
             --enable-filter=scale \
             --enable-filter=format \
             --disable-doc \

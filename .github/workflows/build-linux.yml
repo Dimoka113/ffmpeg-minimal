@@ -24,14 +24,19 @@ jobs:
             git \
             zip
 
-      - name: Clone and build x264 for Linux
+      - name: Clone and build libvpx for Linux
         run: |
-          git clone --depth 1 https://code.videolan.org/videolan/x264.git x264-linux-source
-          cd x264-linux-source
+          git clone --depth 1 --branch v1.14.1 https://chromium.googlesource.com/webm/libvpx libvpx-linux-source
+          cd libvpx-linux-source
           ./configure \
-            --prefix=$PWD/../x264-linux \
-            --enable-static \
-            --disable-cli
+            --prefix=$PWD/../libvpx-linux \
+            --disable-examples \
+            --disable-tools \
+            --disable-docs \
+            --disable-unit-tests \
+            --enable-vp9 \
+            --enable-vp9-highbitdepth \
+            --as=yasm
           make -j$(nproc)
           make install
 
@@ -42,24 +47,25 @@ jobs:
       - name: Build Linux AMD64
         run: |
           cd ffmpeg-source
-          PKG_CONFIG_PATH=$PWD/../x264-linux/lib/pkgconfig ./configure \
+          PKG_CONFIG_PATH=$PWD/../libvpx-linux/lib/pkgconfig ./configure \
             --prefix=$PWD/../ffmpeg-linux-amd64 \
             --disable-everything \
-            --enable-gpl \
-            --enable-libx264 \
+            --enable-libvpx \
             --enable-indev=x11grab \
             --enable-indev=lavfi \
             --enable-decoder=rawvideo \
+            --enable-decoder=vp9 \
             --enable-demuxer=rawvideo \
-            --enable-encoder=libx264 \
+            --enable-encoder=libvpx_vp9 \
             --enable-protocol=pipe \
-            --enable-muxer=mpegts \
+            --enable-muxer=webm \
+            --enable-muxer=matroska \
             --enable-filter=scale \
             --enable-filter=format \
             --disable-doc \
             --disable-debug \
-            --extra-cflags="-I$PWD/../x264-linux/include" \
-            --extra-ldflags="-L$PWD/../x264-linux/lib"
+            --extra-cflags="-I$PWD/../libvpx-linux/include" \
+            --extra-ldflags="-L$PWD/../libvpx-linux/lib"
           make -j$(nproc)
           make install
           strip ../ffmpeg-linux-amd64/bin/ffmpeg

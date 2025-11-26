@@ -3,9 +3,6 @@ name: Build macOS FFmpeg
 on:
   workflow_dispatch:
 
-env:
-  X264_REF: "b35605ace3ddf7c1a5d67a2eb553f034aef41d55"
-
 jobs:
   build-macos-intel:
     runs-on: macos-15-intel
@@ -20,15 +17,18 @@ jobs:
         run: |
           brew install yasm nasm pkg-config
 
-      - name: Clone and build x264
+      - name: Clone and build libvpx
         run: |
-          git clone --branch stable https://code.videolan.org/videolan/x264.git x264-source
-          cd x264-source
-          git checkout ${{ env.X264_REF }}
+          git clone --depth 1 --branch v1.14.1 https://chromium.googlesource.com/webm/libvpx libvpx-source
+          cd libvpx-source
           ./configure \
-            --prefix=$PWD/../x264-install \
-            --enable-static \
-            --disable-cli
+            --prefix=$PWD/../libvpx-install \
+            --disable-examples \
+            --disable-tools \
+            --disable-docs \
+            --disable-unit-tests \
+            --enable-vp9 \
+            --enable-vp9-highbitdepth
           make -j$(sysctl -n hw.ncpu)
           make install
 
@@ -39,24 +39,25 @@ jobs:
       - name: Build macOS Intel
         run: |
           cd ffmpeg-source
-          PKG_CONFIG_PATH=$PWD/../x264-install/lib/pkgconfig ./configure \
+          PKG_CONFIG_PATH=$PWD/../libvpx-install/lib/pkgconfig ./configure \
             --prefix=$PWD/../ffmpeg-macos-intel \
             --disable-everything \
-            --enable-gpl \
-            --enable-libx264 \
+            --enable-libvpx \
             --enable-indev=avfoundation \
             --enable-indev=lavfi \
             --enable-decoder=rawvideo \
+            --enable-decoder=vp9 \
             --enable-demuxer=rawvideo \
-            --enable-encoder=libx264 \
+            --enable-encoder=libvpx_vp9 \
             --enable-protocol=pipe \
-            --enable-muxer=mpegts \
+            --enable-muxer=webm \
+            --enable-muxer=matroska \
             --enable-filter=scale \
             --enable-filter=format \
             --disable-doc \
             --disable-debug \
-            --extra-cflags="-I$PWD/../x264-install/include" \
-            --extra-ldflags="-L$PWD/../x264-install/lib"
+            --extra-cflags="-I$PWD/../libvpx-install/include" \
+            --extra-ldflags="-L$PWD/../libvpx-install/lib"
           make -j$(sysctl -n hw.ncpu)
           make install
           strip ../ffmpeg-macos-intel/bin/ffmpeg
@@ -87,15 +88,18 @@ jobs:
         run: |
           brew install yasm nasm pkg-config
 
-      - name: Clone and build x264
+      - name: Clone and build libvpx
         run: |
-          git clone --branch stable https://code.videolan.org/videolan/x264.git x264-source
-          cd x264-source
-          git checkout ${{ env.X264_REF }}
+          git clone --depth 1 --branch v1.14.1 https://chromium.googlesource.com/webm/libvpx libvpx-source
+          cd libvpx-source
           ./configure \
-            --prefix=$PWD/../x264-install \
-            --enable-static \
-            --disable-cli
+            --prefix=$PWD/../libvpx-install \
+            --disable-examples \
+            --disable-tools \
+            --disable-docs \
+            --disable-unit-tests \
+            --enable-vp9 \
+            --enable-vp9-highbitdepth
           make -j$(sysctl -n hw.ncpu)
           make install
 
@@ -106,23 +110,24 @@ jobs:
       - name: Build macOS Apple Silicon
         run: |
           cd ffmpeg-source
-          PKG_CONFIG_PATH=$PWD/../x264-install/lib/pkgconfig ./configure \
+          PKG_CONFIG_PATH=$PWD/../libvpx-install/lib/pkgconfig ./configure \
             --prefix=$PWD/../ffmpeg-macos-arm64 \
             --disable-everything \
-            --enable-gpl \
-            --enable-libx264 \
+            --enable-libvpx \
             --enable-indev=avfoundation \
             --enable-indev=lavfi \
             --enable-decoder=rawvideo \
-            --enable-encoder=libx264 \
+            --enable-decoder=vp9 \
+            --enable-encoder=libvpx_vp9 \
             --enable-protocol=pipe \
-            --enable-muxer=mpegts \
+            --enable-muxer=webm \
+            --enable-muxer=matroska \
             --enable-filter=scale \
             --enable-filter=format \
             --disable-doc \
             --disable-debug \
-            --extra-cflags="-I$PWD/../x264-install/include" \
-            --extra-ldflags="-L$PWD/../x264-install/lib"
+            --extra-cflags="-I$PWD/../libvpx-install/include" \
+            --extra-ldflags="-L$PWD/../libvpx-install/lib"
           make -j$(sysctl -n hw.ncpu)
           make install
           strip ../ffmpeg-macos-arm64/bin/ffmpeg
