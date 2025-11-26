@@ -6,8 +6,8 @@ A minimalistic ffmpeg build for Bitbound projects, optimized for desktop screen 
 
 This repository provides minimal FFmpeg builds with only the essential components for:
 - Desktop screen capture (platform-specific APIs)
-- H.264 encoding (libx264)
-- MPEG-TS container format (ideal for streaming)
+- VP9 encoding (libvpx)
+- WebM/Matroska container formats (ideal for streaming)
 - Piping output to stdout
 
 ## Supported Platforms
@@ -22,18 +22,21 @@ The GitHub Actions workflows automatically build FFmpeg for:
 ## Build Configuration
 
 All builds use `--disable-everything` then explicitly enable only what's needed:
-- **Enabled**: GPL, libx264 encoder, rawvideo decoder, mpegts muxer, pipe protocol, scale/format filters
-- **Platform-specific capture**: 
+- **Enabled**: libvpx encoder/decoder (VP9), rawvideo decoder, webm/matroska muxers, pipe protocol, scale/format filters
+- **Platform-specific capture**:
   - Windows: dshow, and either gdigrab or ddagrab (selected at build time)
   - Linux: x11grab (X11), lavfi
   - macOS: avfoundation
 
 This approach ensures the absolute smallest binary size by disabling all features first, then enabling only the essential components.
 
+All builds are **LGPL-compatible** as they use libvpx (BSD-licensed) instead of GPL-licensed codecs.
+
 ## Technical Decisions
 
-- **Codec**: H.264 (libx264) - Best browser compatibility via Media Source Extensions
-- **Container**: MPEG-TS (mpegts) - Ideal for real-time streaming, widely supported in browsers
+- **Codec**: VP9 (libvpx) - Modern, royalty-free codec with excellent compression and quality
+- **Container**: WebM/Matroska - Modern containers ideal for real-time streaming with VP9
+- **License**: LGPL-compatible - Uses BSD-licensed libvpx instead of GPL-licensed codecs
 - **Screen Capture APIs**:
   - Windows: GDIGrab (`-f gdigrab -i desktop`) or DDAGrab (`-f ddagrab -i desktop`) for Desktop Duplication API
   - Linux: X11grab with `-f x11grab -i :0.0`
@@ -45,28 +48,28 @@ Download the appropriate binary from GitHub Actions artifacts and use it to capt
 
 ### Windows (GDIGrab)
 ```bash
-ffmpeg -f gdigrab -framerate 30 -i desktop -c:v libx264 -preset ultrafast -tune zerolatency -f mpegts -
+ffmpeg -f gdigrab -framerate 30 -i desktop -c:v libvpx-vp9 -deadline realtime -cpu-used 8 -f webm -
 ```
 
 ### Windows (DDAGrab - Desktop Duplication API)
 ```bash
-ffmpeg -f ddagrab -framerate 30 -i desktop -c:v libx264 -preset ultrafast -tune zerolatency -f mpegts -
+ffmpeg -f ddagrab -framerate 30 -i desktop -c:v libvpx-vp9 -deadline realtime -cpu-used 8 -f webm -
 ```
 
 Local testing example:
 
 ```
-ffmpeg -f ddagrab -framerate 30 -i desktop -vf "format=yuv420p" -c:v libx264 -preset ultrafast -tune zerolatency -f mpegts - > output.ts
+ffmpeg -f ddagrab -framerate 30 -i desktop -vf "format=yuv420p" -c:v libvpx-vp9 -deadline realtime -cpu-used 8 -f webm - > output.webm
 ```
 
 ### Linux (X11)
 ```bash
-ffmpeg -f x11grab -framerate 30 -i :0.0 -c:v libx264 -preset ultrafast -tune zerolatency -f mpegts -
+ffmpeg -f x11grab -framerate 30 -i :0.0 -c:v libvpx-vp9 -deadline realtime -cpu-used 8 -f webm -
 ```
 
 ### macOS
 ```bash
-ffmpeg -f avfoundation -framerate 30 -i "Capture screen 0" -c:v libx264 -preset ultrafast -tune zerolatency -f mpegts -
+ffmpeg -f avfoundation -framerate 30 -i "Capture screen 0" -c:v libvpx-vp9 -deadline realtime -cpu-used 8 -f webm -
 ```
 
 ## Building
