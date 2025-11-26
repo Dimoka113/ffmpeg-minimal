@@ -81,3 +81,4 @@ jobs:
           path: |
             ffmpeg-linux-amd64/bin/ffmpeg.zip
           if-no-files-found: error
+          retention-days: 1

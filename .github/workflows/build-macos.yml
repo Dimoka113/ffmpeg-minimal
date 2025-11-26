@@ -74,6 +74,7 @@ jobs:
           path: |
             ffmpeg-macos-intel/bin/ffmpeg.zip
           if-no-files-found: error
+          retention-days: 1
 
   build-macos-arm64:
     runs-on: macos-latest  # Apple Silicon runner
@@ -143,3 +144,4 @@ jobs:
           path: |
             ffmpeg-macos-arm64/bin/ffmpeg.zip
           if-no-files-found: error
+          retention-days: 1

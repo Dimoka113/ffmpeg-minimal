@@ -104,3 +104,4 @@ jobs:
           path: |
             output/bin/ffmpeg.zip
           if-no-files-found: error
+          retention-days: 1

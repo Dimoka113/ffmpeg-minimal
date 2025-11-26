@@ -197,6 +197,7 @@ jobs:
           path: |
             ffmpeg-linux-amd64/bin/ffmpeg.zip
           if-no-files-found: error
+          retention-days: 1
 
       - name: Upload Windows 64-bit artifact
         uses: actions/upload-artifact@v5
@@ -205,6 +206,7 @@ jobs:
           path: |
             ffmpeg-win64/bin/ffmpeg.zip
           if-no-files-found: error
+          retention-days: 1
 
       - name: Upload Windows 32-bit artifact
         uses: actions/upload-artifact@v5
@@ -213,3 +215,4 @@ jobs:
           path: |
             ffmpeg-win32/bin/ffmpeg.zip
           if-no-files-found: error
+          retention-days: 1
