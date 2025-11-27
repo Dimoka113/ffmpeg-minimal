@@ -3,12 +3,18 @@ name: Build Linux
 on:
   workflow_dispatch:
   workflow_call:
+    outputs:
+      ffmpeg_version:
+        description: "The FFmpeg version that was built"
+        value: ${{ jobs.build-linux.outputs.ffmpeg_version }}
 
 jobs:
   build-linux:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+    outputs:
+      ffmpeg_version: ${{ steps.get-version.outputs.version }}
 
     steps:
       - name: Checkout repository
@@ -44,6 +50,14 @@ jobs:
       - name: Clone FFmpeg
         run: |
           git clone --depth 1 --branch release/7.1 https://git.ffmpeg.org/ffmpeg.git ffmpeg-source
+
+      - name: Get FFmpeg version
+        id: get-version
+        run: |
+          cd ffmpeg-source
+          VERSION=$(cat RELEASE)
+          echo "FFmpeg version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build Linux AMD64
         run: |
