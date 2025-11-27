@@ -2,29 +2,60 @@ name: Create Release
 
 on:
   workflow_dispatch:
+    inputs:
+      rebuild:
+        description: "Rebuild all artifacts (uncheck to use latest existing artifacts)"
+        required: true
+        default: true
+        type: boolean
+      version:
+        description: "Version override (leave empty to auto-detect from FFmpeg source)"
+        required: false
+        type: string
 
 jobs:
   build-win-gdigrab:
+    if: ${{ inputs.rebuild }}
     uses: ./.github/workflows/build-windows.yml
     with:
       capture_device: 'gdigrab'
 
   build-linux:
+    if: ${{ inputs.rebuild }}
     uses: ./.github/workflows/build-linux.yml
 
   build-macos:
+    if: ${{ inputs.rebuild }}
     uses: ./.github/workflows/build-macos.yml
 
   publish-release:
+    if: ${{ always() && (inputs.rebuild == false || (needs.build-win-gdigrab.result == 'success' && needs.build-linux.result == 'success' && needs.build-macos.result == 'success')) }}
     needs: [build-win-gdigrab, build-linux, build-macos]
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    env:
-      VERSION: ${{ needs.build-linux.outputs.ffmpeg_version }}.${{ github.run_number }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Get FFmpeg version from source
+        id: get-version
+        if: ${{ inputs.version == '' }}
+        run: |
+          git clone --depth 1 --branch release/7.1 https://git.ffmpeg.org/ffmpeg.git ffmpeg-source
+          VERSION=$(cat ffmpeg-source/RELEASE)
+          echo "FFmpeg version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          rm -rf ffmpeg-source
+
+      - name: Set release version
+        id: release-version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${{ steps.get-version.outputs.version }}.${{ github.run_number }}" >> $GITHUB_OUTPUT
+          fi
 
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
@@ -38,8 +69,9 @@ jobs:
       - name: Create Release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.release-version.outputs.version }}
         run: |
           gh release create "v${{ env.VERSION }}" \
             --title "FFmpeg Minimal ${{ env.VERSION }}" \
-            --notes "Build of FFmpeg ${{ needs.build-linux.outputs.ffmpeg_version }} with libvpx support." \
+            --notes "Build of FFmpeg with libvpx support." \
             artifacts/*
