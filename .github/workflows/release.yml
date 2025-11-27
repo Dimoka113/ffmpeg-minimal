@@ -23,6 +23,9 @@ jobs:
     env:
       VERSION: ${{ needs.build-linux.outputs.ffmpeg_version }}.${{ github.run_number }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
