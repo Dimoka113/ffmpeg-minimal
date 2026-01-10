@@ -48,7 +48,6 @@ jobs:
             mingw-w64-${{ matrix.arch }}-yasm
             mingw-w64-${{ matrix.arch }}-nasm
             mingw-w64-${{ matrix.arch }}-pkg-config
-            mingw-w64-${{ matrix.arch }}-nvcodec-headers
             git
 
       - name: Build libvpx
