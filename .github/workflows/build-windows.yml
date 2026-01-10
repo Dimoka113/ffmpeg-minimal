@@ -48,6 +48,7 @@ jobs:
             mingw-w64-${{ matrix.arch }}-yasm
             mingw-w64-${{ matrix.arch }}-nasm
             mingw-w64-${{ matrix.arch }}-pkg-config
+            mingw-w64-x86_64-nvcodec-headers
             git
 
       - name: Build libvpx
@@ -90,6 +91,8 @@ jobs:
             --enable-filter=scale \
             --enable-filter=format \
             --enable-d3d11va \
+            --enable-dxgi \
+            --enable-nvenc \
             --disable-doc \
             --disable-debug \
             --extra-ldflags="-static"
