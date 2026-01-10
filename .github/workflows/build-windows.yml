@@ -89,6 +89,8 @@ jobs:
             --enable-muxer=matroska \
             --enable-filter=scale \
             --enable-filter=format \
+            --enable-d3d11va \
+            --enable-nvenc \
             --disable-doc \
             --disable-debug \
             --extra-ldflags="-static"
