@@ -90,6 +90,7 @@ jobs:
             --enable-filter=scale \
             --enable-filter=format \
             --enable-d3d11va \
+            --enable-wasapi \
             --disable-doc \
             --disable-debug \
             --extra-ldflags="-static"
